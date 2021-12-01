@@ -11,8 +11,11 @@ from search import *
 from tensorboard_logger import Logger
 from thumos_features import *
 from tqdm import tqdm
+import time
 
 if __name__ == "__main__":
+    t_start =time.perf_counter() 
+
     args = parse_args()
     if args.debug:
         pdb.set_trace()
@@ -77,11 +80,12 @@ if __name__ == "__main__":
 
         if step % config.search_freq == 0:
             optimal_sequence_search(net, config, logger, train_loader)
-        
+    
         if step % 100 == 0:      
             test(net, config, logger, test_loader, test_info, step)
-
+            print(test_info)
             if test_info["average_mAP[0.1:0.7]"][-1] > best_mAP:
+                print("best saved")
                 best_mAP = test_info["average_mAP[0.1:0.7]"][-1]
 
                 utils.save_best_record_thumos(test_info, 
@@ -89,3 +93,8 @@ if __name__ == "__main__":
 
                 torch.save(net.state_dict(), os.path.join(args.model_path, \
                     "model_seed_{}.pkl".format(config.seed)))
+            print("Current average_mAP[0.1:0.7]:{:.4f} Best average_mAP[0.1:0.7]:{:.4f}".format(test_info["average_mAP[0.1:0.7]"][-1],best_mAP))
+        
+    t_end = time.perf_counter()
+    minutes=(t_end-t_start)/60
+    print('Total Running time:{:2f} minutes'.format(minutes))
